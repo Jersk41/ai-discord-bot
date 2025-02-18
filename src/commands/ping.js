@@ -7,7 +7,7 @@ module.exports = {
     .setDescription('Replies with Pong!'),
     async execute(interaction) {
         // await interaction.deferReply();
-		// await wait(4_000);
+        // await wait(4_000);
         await interaction.reply('Pong!');
         // const message = await interaction.fetchReply();
         // console.log(message);

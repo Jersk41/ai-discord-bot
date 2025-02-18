@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@huggingface/inference": "^3.1.5",
+    "@huggingface/transformers": "^3.3.3",
     "discord.js": "^14.17.3",
     "dotenv": "^16.4.7"
   },
@@ -15,8 +16,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "lint": "eslint ./src/",
+    "lint:fix": "eslint --fix ./src/",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
