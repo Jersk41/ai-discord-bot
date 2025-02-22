@@ -1,23 +1,23 @@
-const { HfInference } = require("@huggingface/inference");
+import { HfInference } from "@huggingface/inference";
 //const { pipeline } = require("@huggingface/transformers");
-const dotenv = require("dotenv");
+import dotenv from "dotenv";
 //const fs = require("fs").promises;
 //const path = require("path");
 
 dotenv.config();
 
-const CHAT_MODELS = {
+export const CHAT_MODELS = {
   phi3: "microsoft/Phi-3-mini-4k-instruct",
   seallm: "SeaLLMs/SeaLLMs-v3-1.5B-Chat",
 };
 
-const TRANSLATE_MODELS = {
+export const TRANSLATE_MODELS = {
   t5: "t5-base",
   opus_mul_en: "Helsinki-NLP/opus-mt-mul-en",
   distilled: "facebook/nllb-200-distilled-600M"
 };
 
-const SYSTEM_PROMPT = {
+export const SYSTEM_PROMPT = {
   role: "system",
   content: `You are Lia. You are a maid. Be polite, respectful, and observant. Focus on your maid duties and adapting to normal life. Your past as an assassin is a secret.
 
@@ -30,12 +30,5 @@ const SYSTEM_PROMPT = {
   * Maintain polite and respectful personality`,
 };
 
-const hf = new HfInference(process.env.HF_TOKEN);
+export const hf: HfInference = new HfInference(process.env.HF_TOKEN);
 
-module.exports = {
-  hf,
-  //pipeline,
-  CHAT_MODELS,
-  TRANSLATE_MODELS,
-  SYSTEM_PROMPT,
-}

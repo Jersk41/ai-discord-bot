@@ -1,14 +1,13 @@
-const { REST, Routes } = require("discord.js");
-const fs = require("node:fs");
-const path = require("node:path");
-const dotenv = require("dotenv");
+import { REST, Routes, DiscordAPIError  } from "discord.js";
+import dotenv from "dotenv";
+import { slashCommandsArr } from "./commands";
 
 dotenv.config();
 
 // env
-const clientId = process.env.BOT_CLIENT_ID;
+const clientId = process.env.DISCORD_CLIENT_ID;
 const guildId = process.env.GUILD_ID;
-const token = process.env.BOT_TOKEN;
+const token = process.env.DISCORD_TOKEN;
 
 // Validate environment variables
 if (!clientId || !guildId || !token) {
@@ -19,19 +18,18 @@ if (!clientId || !guildId || !token) {
   process.exit(1);
 }
 
+/*
 const commands = [];
 
 // Grab all command files
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs
   .readdirSync(commandsPath)
-  .filter((file) => file.endsWith(".js") &&
-  !file.endsWith(".test.js") &&
-  !file.endsWith(".spec.js"));
+  .filter((file) => file.endsWith(".ts"));
 
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
-  const command = require(filePath);
+  //const command = require(filePath);
   if ("data" in command && "execute" in command) {
     commands.push(command.data.toJSON());
   } else {
@@ -40,9 +38,12 @@ for (const file of commandFiles) {
     );
   }
 }
+*/
+
+const commands = slashCommandsArr.map(command => command.toJSON())
 
 // Construct and prepare an instance of the REST module
-const rest = new REST().setToken(token);
+const rest = new REST({ version: "10" }).setToken(token);
 
 // Deploy commands
 (async () => {
@@ -51,22 +52,25 @@ const rest = new REST().setToken(token);
       `Started refreshing ${commands.length} application (/) commands.`
     );
 
-    const data = await rest.put(
+    const data: Array<object> | object | unknown = await rest.put(
       Routes.applicationCommands(clientId),
       { body: commands }
     );
+    //console.log("Debug slash/commands array: ", data);
 
     console.log(
-      `Successfully reloaded ${data.length} application (/) commands.`
+      `Successfully reloaded ${data instanceof Array? data.length : data} application (/) commands.`
     );
-  } catch (error) {
-    if (error.code === "ConnectionRefused") {
+    process.exit(0);
+  } catch (error: DiscordAPIError | unknown) {
+    if (error instanceof DiscordAPIError && error.status === 401) {
       console.error("Connection refused. Please check:");
       console.error("1. Your internet connection");
       console.error("2. Discord API status: https://discordstatus.com");
       console.error("3. Bot token validity");
-    } else {
+    }else{
       console.error("Deployment error:", error);
     }
+    process.exit(1);
   }
 })();

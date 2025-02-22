@@ -1,6 +1,6 @@
-const {hf, TRANSLATE_MODELS, CHAT_MODELS, SYSTEM_PROMPT } = require('./inferences');
+import { hf, TRANSLATE_MODELS } from "./inferences";
 
-const translate = async (text, target_lang = 'en') => {
+export const translate = async (text: string, target_lang = 'en') => {
   const model = TRANSLATE_MODELS.opus_mul_en;
   const response = await hf.translation({
     model: model,
@@ -19,7 +19,9 @@ translate(sampleText)
     console.log('Debug: ', out);
   }).catch(console.error);
 */
+
 // Test the function with chat model
+/*
 async function test_translated_chat(){
   const message = {
     content: 'Selamat pagi!, tolong buatkan aku sarapan XD',
@@ -66,14 +68,10 @@ async function test_translated_chat(){
     console.log('Debug BotResponse: ', await botResponse);
     return botResponse;
 }
-
+*/
 /*
 test_translated_chat()
   .then(out => {
     console.log('Debug test translated text: ', out);
   }).catch(console.error);
 */
-module.exports = {
-  translate,
-  //test_translated_chat
-};
