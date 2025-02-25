@@ -44,34 +44,7 @@ rest.put(Routes.applicationCommands(client_id), {
 client.on(Events.InteractionCreate, interactionCreate);
 
 client.on(Events.MessageCreate, messageCreate);
-/*
-client.on(Events.MessageCreate, async interaction => {
-  if (interaction.author.bot) return;
 
-  const isMentioned = interaction.mentions.has(interaction.client.user);
-  const isReplyToBot = interaction.reference?.messageId &&
-    (await interaction.channel.messages.fetch(interaction.reference.messageId))
-  .author.id === interaction.client.user.id;
-  if (isMentioned || isReplyToBot) {
-    await handleMessage(interaction);
-  }
-});
-*/
-/*
-const eventsPath = path.join(__dirname, "events");
-const eventFiles = fs
-	.readdirSync(eventsPath)
-	.filter((file) => file.endsWith(".js"));
-
-for (const file of eventFiles) {
-	const filePath = path.join(eventsPath, file);
-	const event = require(filePath);
-	if (event.once) {
-		client.once(event.name, (...args) => event.execute(...args));
-	} else {
-		client.on(event.name, (...args) => event.execute(...args));
-	}
-}
-*/
 // Log in to Discord with your client's token
 client.login(process.env.BOT_TOKEN).catch((error) => console.error("Discord.Client.Login.Error", error));
+
