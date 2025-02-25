@@ -1,12 +1,10 @@
-//const { HfInference } = require("@huggingface/inference");
-//const dotenv = require("dotenv");
-const { hf, CHAT_MODELS, SYSTEM_PROMPT } = require("./utils/inferences");
-const { translate } = require("./utils/translate");
-const fs = require("fs").promises;
-const path = require("path");
+import { hf, CHAT_MODELS, SYSTEM_PROMPT } from "./utils/inferences";
+import { translate } from "./utils/translate";
+import type { ChatCompletionOutput } from "@huggingface/tasks";
 
 //dotenv.config();
 
+/*
 const lastMessages = new Map(); // Store recent conversations per channel
 const MAX_HISTORY = 10; // Keep last 10 messages per channel
 
@@ -65,25 +63,19 @@ async function logToFile(message, botResponse) {
     console.error("Error writing to log file:", error);
   }
 }
-
-async function handleMessage(message) {
+*/
+export async function handleMessage(message: any) {
   try {
     await message.channel.sendTyping();
 
     // Get channel history
-    const channelHistory = lastMessages.get(message.channel.id) || [];
+    // const channelHistory = lastMessages.get(message.channel.id) || [];
 
     let userInput = message.content.replace(/<@!\d+>/g, "").trim();
     userInput = await translate(userInput);
-    const response = await hf.chatCompletion({
-      model: CHAT_MODELS.phi3,
-      messages: [
-        SYSTEM_PROMPT,
-        {
-          role: "user",
-          content: userInput,
-        },
-      ],
+    const response: ChatCompletionOutput = await hf.chatCompletion({
+      model: CHAT_MODELS.phi3, //CHAT_MODELS[modelChoice.name] || CHAT_MODELS.phi3,
+      messages: [SYSTEM_PROMPT, { role: "user", content: userInput }],
       max_tokens: 512,
       response_format: {
         type: "json",
@@ -101,7 +93,22 @@ async function handleMessage(message) {
         }`,
       },
     });
-    // Parse and validate response
+
+    let botResponse = response.choices[0].message;
+    if (!botResponse || !botResponse.content) {
+      console.error("Respon bot tidak cocok", botResponse);
+      return;
+    }
+
+    try{
+      const content = JSON.parse(botResponse.content).data;
+      botResponse = content;
+    }catch(err: any | unknown){
+      console.error("Error parsing data: ", err instanceof Error ? err.message : err);
+      return;
+    }
+
+    /* Parse and validate response
     let botResponse;
     try {
       const parsed = JSON.parse(response.choices[0].message.content);
@@ -112,6 +119,7 @@ async function handleMessage(message) {
     }
     // Log interaction
     // await logToFile(message, botResponse);
+    */
 
     // Send response
     return await message.reply(botResponse);
@@ -120,5 +128,3 @@ async function handleMessage(message) {
     await message.reply("Maaf, terjadi kesalahan saat memproses pesan Anda.");
   }
 }
-
-module.exports = { handleMessage };
