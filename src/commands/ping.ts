@@ -9,7 +9,7 @@ const pingCommand: SlashCommand = {
   .setDescription('Replies with Pong!'),
   execute: async (interaction) => {
     //const options: { [key:string]: string | number | boolean } = {};
-    await interaction.reply("Pong!" + (process.env.DISCORD_GUILD_ID == interaction.guildId?.toString()) ? "Dev only mode" : "")
+    await interaction.reply((process.env.ENV === 'dev') ? "Secret Pong" : "Pong!")
   }
 };
 export default pingCommand;

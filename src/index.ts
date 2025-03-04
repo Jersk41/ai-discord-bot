@@ -36,13 +36,25 @@ client.once(Events.ClientReady, async (c) => {
 });
 
 const rest = new REST({ version: "10" }).setToken(token);
-rest.put(Routes.applicationGuildCommands(client_id, guild_id), {
-  body: slashCommandsArr.map(command => command.toJSON()),
-}).then((data: Array<object> | object | unknown): void => {
-  console.log(`Successfully load ${data instanceof Array? data.length : data} slash command(s)`);
-}).catch(e => {
-  console.error(e instanceof Error ? e.message : e);
-});
+if (process.env.ENV == 'prod') {
+  rest.put(Routes.applicationCommands(client_id), {
+    body: slashCommandsArr.map(command => command.toJSON()),
+  }).then((data: Array<object> | object | unknown): void => {
+    console.log(`Successfully load ${data instanceof Array? data.length : data} slash command(s)`);
+  }).catch(e => {
+    console.error(e instanceof Error ? e.message : e);
+  });
+}else{
+  // rest.put(Routes.applicationCommands(client_id), {
+  rest.put(Routes.applicationGuildCommands(client_id, guild_id), {
+    body: slashCommandsArr.map(command => command.toJSON()),
+  }).then((data: Array<object> | object | unknown): void => {
+    console.log(`Successfully load ${data instanceof Array? data.length : data} slash command(s)`);
+  }).catch(e => {
+    console.error(e instanceof Error ? e.message : e);
+  });
+
+}
 
 client.on(Events.InteractionCreate, interactionCreate);
 

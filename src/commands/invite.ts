@@ -9,8 +9,7 @@ import { SlashCommand } from "../types";
 import dotenv from "dotenv";
 
 dotenv.config();
-const token: string = process.env.DISCORD_TOKEN || "";
-
+const client_id: string = process.env.DISCORD_CLIENT_ID || "";
 
 const inviteCommand: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -20,7 +19,7 @@ const inviteCommand: SlashCommand = {
     //const options: { [key:string]: string | number | boolean } = {};
     const invitationEmbed = new EmbedBuilder()
     .setColor([100,120,205])
-    .setTitle("Lia - Invite")
+    .setTitle("Invite link")
     .setAuthor({
       name: "Lia",
     })
@@ -29,7 +28,7 @@ const inviteCommand: SlashCommand = {
     const invite = new ButtonBuilder()
     // .setCustomId("invite")
     .setLabel("Invite me")
-    .setURL(`https://discord.com/oauth2/authorize?client_id=${token}&permissions=277062343744&scope=bot%20applications.commands`)
+    .setURL(`https://discord.com/oauth2/authorize?client_id=${client_id}&permissions=277062343744&scope=bot%20applications.commands`)
     .setStyle(ButtonStyle.Link)
 
     const support = new ButtonBuilder()
