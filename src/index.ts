@@ -16,8 +16,10 @@ import messageCreate from "./events/messageCreate";
 
 const token: string = process.env.DISCORD_TOKEN || "";
 const client_id: string = process.env.DISCORD_CLIENT_ID || "";
+const guild_id: string = process.env.DISCORD_GUILD_ID || "";
 
 if(!token || !client_id) throw new Error("You need to set the token and the client id!");
+if(!token || !guild_id) throw new Error("You need to set the token and the guild id!");
 
 const client = new Client({
 	intents: [
@@ -34,7 +36,7 @@ client.once(Events.ClientReady, async (c) => {
 });
 
 const rest = new REST({ version: "10" }).setToken(token);
-rest.put(Routes.applicationCommands(client_id), {
+rest.put(Routes.applicationGuildCommands(client_id, guild_id), {
   body: slashCommandsArr.map(command => command.toJSON()),
 }).then((data: Array<object> | object | unknown): void => {
   console.log(`Successfully load ${data instanceof Array? data.length : data} slash command(s)`);

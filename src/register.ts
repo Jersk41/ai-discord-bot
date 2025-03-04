@@ -5,16 +5,16 @@ import { slashCommandsArr } from "./commands";
 dotenv.config();
 
 // env
-const clientId = process.env.DISCORD_CLIENT_ID;
-const guildId = process.env.GUILD_ID;
-const token = process.env.DISCORD_TOKEN;
+const token: string = process.env.DISCORD_TOKEN || "";
+const client_id: string = process.env.DISCORD_CLIENT_ID || "";
+const guild_id: string = process.env.DISCORD_GUILD_ID || "";
 
 // Validate environment variables
-if (!clientId || !guildId || !token) {
+if (!client_id || !guild_id || !token) {
   console.error("Required environment variables missing:");
-  console.error(`BOT_CLIENT_ID: ${clientId ? "✓" : "✗"}`);
-  console.error(`GUILD_ID: ${guildId ? "✓" : "✗"}`);
-  console.error(`BOT_TOKEN: ${token ? "✓" : "✗"}`);
+  console.error(`DISCORD_CLIENT_ID: ${client_id ? "✓" : "✗"}`);
+  console.error(`DISCORD_GUILD_ID: ${guild_id ? "✓" : "✗"}`);
+  console.error(`DISCORD_TOKEN: ${token ? "✓" : "✗"}`);
   process.exit(1);
 }
 
@@ -53,7 +53,7 @@ const rest = new REST({ version: "10" }).setToken(token);
     );
 
     const data: Array<object> | object | unknown = await rest.put(
-      Routes.applicationCommands(clientId),
+      Routes.applicationCommands(client_id),
       { body: commands }
     );
     //console.log("Debug slash/commands array: ", data);
