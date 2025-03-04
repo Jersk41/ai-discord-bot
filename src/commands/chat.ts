@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, InteractionEditReplyOptions } from "discord.js";
-import { SlashCommand } from "../types";
+import type { SlashCommand } from "../types";
 import { hf,  CHAT_MODELS, SYSTEM_PROMPT } from "../utils/inferences"
 import type { ChatCompletionOutput } from "@huggingface/tasks";
 
@@ -18,7 +18,7 @@ for (const [key, value] of Object.entries(CHAT_MODELS)){
 }
 
 const chatCommand: SlashCommand = {
-  command: new SlashCommandBuilder()
+  data: new SlashCommandBuilder()
   .setName("chat")
   .setDescription("Ask bot about something")
   .addStringOption(
@@ -54,18 +54,14 @@ const chatCommand: SlashCommand = {
 
       if (!botResponse || !botResponse.content){
         console.error("Respon bot tidak cocok", botResponse)
-        await interaction.editReply("Maaf, bot tidak memberikan respon yang valid."); // User-friendly message
-        return; // Important: Stop execution to avoid further errors
+        await interaction.editReply("Maaf, bot tidak memberikan respon yang valid.");
+        return;
       }
 
-      const content = botResponse.content.toString(); // Extract and convert to string *once*
+      const content = botResponse.content.toString();
 
       console.log('bot message: ', content);
 
-      // Option 1: Simple string reply (if content is always a string)
-      // await interaction.editReply(content);
-
-      // Option 2:  Handles potential issues, more robust
       const replyOptions: InteractionEditReplyOptions = {
         content: content, // Now guaranteed to be a string
       };
