@@ -1,9 +1,11 @@
 import {
+  CacheType,
+  Interaction,
   MessageFlags,
 } from "discord.js";
 import { slashCommands } from "../commands";
 
-const interactionCreate = async (interaction: any) => {
+const interactionCreate = async (interaction: Interaction<CacheType>): Promise<void> => {
   if (!interaction.isChatInputCommand()) return;
   //const command = interaction.client.commands.get(interaction.commandName);
   const command = slashCommands.get(interaction.commandName);

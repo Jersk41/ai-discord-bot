@@ -22,6 +22,7 @@ if(!token || !client_id) throw new Error("You need to set the token and the clie
 const client = new Client({
 	intents: [
 		GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildVoiceStates,
 		GatewayIntentBits.GuildMessages,
 		GatewayIntentBits.MessageContent,
 	],
