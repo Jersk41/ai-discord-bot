@@ -1,12 +1,12 @@
-import fs from 'fs';
-import path from 'path';
-import { createAudioResource } from '@discordjs/voice';
-import { generateTTS } from '../src/commands/voice';
-import {describe, expect, test, beforeAll, afterAll } from '@jest/globals';
+import fs from "fs";
+import path from "path";
+import { createAudioResource } from "@discordjs/voice";
+import { generateTTS } from "../src/commands/voice";
+import { describe, expect, test, beforeAll, afterAll } from "@jest/globals";
 
-describe('TTS Generation Tests', () => {
-  const testDir = path.join(__dirname, 'test-audio');
-  const testFile = path.join(testDir, 'test-tts.wav');
+describe("TTS Generation Tests", () => {
+  const testDir = path.join(__dirname, "test-audio");
+  const testFile = path.join(testDir, "test-tts.wav");
 
   // Setup test directory
   beforeAll(() => {
@@ -25,8 +25,8 @@ describe('TTS Generation Tests', () => {
     }
   });
 
-  test('should generate valid audio file', async () => {
-    const testText = 'Hello, this is a test message';
+  test("should generate valid audio file", async () => {
+    const testText = "Hello, this is a test message";
 
     await generateTTS(testText, testFile);
 
@@ -38,8 +38,8 @@ describe('TTS Generation Tests', () => {
     expect(stats.size).toBeGreaterThan(0);
   });
 
-  test('should create valid Discord audio resource', async () => {
-    const testText = 'Testing Discord audio compatibility';
+  test("should create valid Discord audio resource", async () => {
+    const testText = "Testing Discord audio compatibility";
 
     await generateTTS(testText, testFile);
 
@@ -56,19 +56,24 @@ describe('TTS Generation Tests', () => {
     expect(resource.readable).toBeTruthy();
   });
 
-  test('should handle empty text input', async () => {
-    await expect(generateTTS('', testFile)).rejects.toThrow('Invalid text input');
+  test("should handle empty text input", async () => {
+    await expect(generateTTS("", testFile)).rejects.toThrow(
+      "Invalid text input"
+    );
   });
 
-  test('should handle non-string input', async () => {
+  test("should handle non-string input", async () => {
     // @ts-expect-error because given data should be text not number
-    await expect(generateTTS(123, testFile)).rejects.toThrow('Invalid text input');
+    await expect(generateTTS(123, testFile)).rejects.toThrow(
+      "Invalid text input"
+    );
   });
 
-  test('should handle text longer than 200 characters', async () => {
-    const longText = 'This is a very long message that needs to be split into multiple parts. ' +
-      'We will add some punctuation marks, like commas, and periods to help with the splitting process. ' +
-      'The Google TTS API has a limit of 200 characters per request, so we need to handle this properly.' +
+  test("should handle text longer than 200 characters", async () => {
+    const longText =
+      "This is a very long message that needs to be split into multiple parts. " +
+      "We will add some punctuation marks, like commas, and periods to help with the splitting process. " +
+      "The Google TTS API has a limit of 200 characters per request, so we need to handle this properly." +
       "a".repeat(75);
     await expect(generateTTS(longText, testFile)).resolves.not.toThrow();
 
@@ -78,5 +83,10 @@ describe('TTS Generation Tests', () => {
     // Check if file has content
     const stats = fs.statSync(testFile);
     expect(stats.size).toBeGreaterThan(0);
+  });
+
+  test("should handle bad words before speak", async () => {
+    const sampleCursing = "Kan tai!";
+    await expect(generateTTS(sampleCursing, testFile)).resolves.not.toThrow();
   });
 });

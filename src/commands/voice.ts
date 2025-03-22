@@ -16,6 +16,7 @@ import {
 import * as googleTTS from "google-tts-api";
 import type { SlashCommand } from "../types";
 import { connectToChannel } from "../utils/helpers";
+import { cleanText, filterWordResult, filterWords } from "../utils/filter";
 
 let connection: VoiceConnection | undefined;
 
@@ -55,7 +56,7 @@ const joinVc: SlashCommand = {
       await interaction.reply("Connection undefined!");
     }
     connection.on(VoiceConnectionStatus.Ready, () => {
-      console.log("Debug: Bot connection is ready");
+      console.debug("Debug: Bot connection is ready");
     });
     const replyOptions: InteractionEditReplyOptions = {
       content: "I have joined and connected to your voice channel!",
@@ -122,18 +123,13 @@ export async function generateTTS(
       combinedBuffers.push(Buffer.from(buffer));
     }
     fs.writeFileSync(outputPath, Buffer.concat(combinedBuffers));
-    console.log("TTS generation successful");
+    console.info("TTS generation successful");
   } catch (error) {
     console.error("Error generating TTS:", error);
     throw error;
   }
 }
 
-export const wordTranslations = {
-  uwu: "ooo woo",
-  owo: "oh woah",
-  wkwk: "haha",
-};
 
 const ttsCommand: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -176,19 +172,17 @@ const ttsCommand: SlashCommand = {
       await interaction.editReply("No message provided!");
       return;
     }
+    let cleanedText = cleanText(`${message}`);
 
-    let cleanText = `${message}`
-      .replace(/https?:\/\/[\w.-]+(\/\S*)?/g, "")
-      .replace(/<:[\w]+:[0-9]+>/g, "")
-      .replace(/:[\w]+:/g, "")
-      .trim();
-
-    for (const [word, translation] of Object.entries(wordTranslations)) {
-      const regex = new RegExp(`\\b${word}\\b`, "gi");
-      cleanText = cleanText.replace(regex, translation);
+    // Filter bad words
+    const profanityCheck: filterWordResult = filterWords(cleanedText);
+    if(profanityCheck.profanity){
+      await interaction.editReply("Admiiin!, ada yang ngomong kasar min!");
+      return;
     }
+    cleanedText = profanityCheck.message;
 
-    if (!cleanText) return;
+    if (!cleanedText) return;
 
     try {
       // Setup paths for audio file
@@ -214,12 +208,12 @@ const ttsCommand: SlashCommand = {
       connection.subscribe(player);
 
       // Generate and play TTS
-      const ttsText = `${interaction.user.displayName} bilang: ${cleanText}`;
+      const ttsText = `${interaction.user.displayName} bilang: ${cleanedText}`;
       await generateTTS(ttsText, ttsPath);
       const resource = createAudioResource(ttsPath);
       player.play(resource);
 
-      await interaction.editReply(`Playing your message: ${cleanText}`);
+      await interaction.editReply(`Playing your message: ${cleanedText}`);
     } catch (error) {
       console.error("TTS Error:", error);
       await interaction.editReply("Failed to play your message!");
