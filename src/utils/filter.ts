@@ -8,6 +8,7 @@ import {
   WordReplacementType,
 } from "deep-profanity-filter";
 import wordlist from "./wordlists.json";
+import { logger } from "./logger";
 
 type slangWordsType = {
   word: string;
@@ -39,14 +40,14 @@ export const filterWords = (text: string): filterWordResult => {
       if (badWords.length > 0) {
         profanity = { badwordcount: badWords.length, badwords: badWords };
       } else {
-        console.info("No bad words were found."); // Or all bad words whitelisted.
+        logger.debug("No bad words were found."); // Or all bad words whitelisted.
       }
       return { message: cleanText, profanity: profanity };
     } else {
       return { message: latinText, profanity: profanity };
     }
   } catch (error: unknown | any) {
-    console.error("Error on word checking", error);
+    logger.error("Error on word checking", error);
     throw new Error(error instanceof Error ? error.message : error);
   }
 };

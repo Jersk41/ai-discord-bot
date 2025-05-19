@@ -5,6 +5,7 @@ import {
 	type VoiceConnection,
 } from '@discordjs/voice';
 import type { VoiceBasedChannel } from 'discord.js';
+import { logger } from './logger';
 
 export async function connectToChannel(channel: VoiceBasedChannel): Promise<VoiceConnection> {
 	const connection = joinVoiceChannel({
@@ -15,10 +16,10 @@ export async function connectToChannel(channel: VoiceBasedChannel): Promise<Voic
 
 	try {
 		await entersState(connection, VoiceConnectionStatus.Ready, 60_000);
-    console.log("Voice connection established");
+    logger.info("Voice connection established");
 		return connection;
 	} catch (error) {
-    console.error("Failed to connect to voice channel:", error);
+    logger.error("Failed to connect to voice channel:", error);
 		connection.destroy();
 		throw error;
 	}

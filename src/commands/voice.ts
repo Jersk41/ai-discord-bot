@@ -17,6 +17,7 @@ import * as googleTTS from "google-tts-api";
 import type { SlashCommand } from "../types";
 import { connectToChannel } from "../utils/helpers";
 import { cleanText, filterWordResult, filterWords } from "../utils/filter";
+import { logger } from "../utils/logger";
 
 let connection: VoiceConnection | undefined;
 
@@ -47,20 +48,22 @@ const joinVc: SlashCommand = {
       return;
     }
 
-    console.log(
-      `Received joinvc command from ${interaction.user.tag} in ${interaction.guild.name}`
+    logger.debug(
+      `Joinvc command: ${interaction.user.tag} in ${interaction.guild.name} (${interaction.guild.id})`
     );
 
     connection = await connectToChannel(voiceChannel);
     if (!connection) {
+      logger.warn("Joinvc command failed: connection is undefined");
       await interaction.reply("Connection undefined!");
     }
     connection.on(VoiceConnectionStatus.Ready, () => {
-      console.debug("Debug: Bot connection is ready");
+      logger.info(`Joinvc command: Bot connection is ready on ${interaction.guild?.name}`);
     });
     const replyOptions: InteractionEditReplyOptions = {
       content: "I have joined and connected to your voice channel!",
     };
+    logger.info(`Connected to VC in guild: ${voiceChannel.guild.name}`);
     await interaction.editReply(replyOptions);
   },
 };
@@ -73,11 +76,11 @@ const outVc: SlashCommand = {
     await interaction.deferReply();
     try {
       if (!interaction.member || interaction.member == undefined){
-        throw Error("No memeber proterie")
+        throw Error("No member found in interaction")
       }
       const member = interaction.member as GuildMember;
       if(!member.voice || member.voice == undefined){
-        throw Error("No voice by member?")
+        throw Error("No voice channel found in member")
       };
 
       const voiceChannel = member.voice.channel as VoiceChannel;
@@ -90,9 +93,10 @@ const outVc: SlashCommand = {
       const replyOptions: InteractionEditReplyOptions = {
         content: "_Left the voice channel_",
       };
+      logger.info(`Disconnected from VC in guild: ${voiceChannel.guild.name}`);
       await interaction.editReply(replyOptions);
     } catch (error) {
-      console.error(`Error occured, ${error}`);
+      logger.error("Error occured: ", { error });
     }
   },
 };
@@ -123,9 +127,9 @@ export async function generateTTS(
       combinedBuffers.push(Buffer.from(buffer));
     }
     fs.writeFileSync(outputPath, Buffer.concat(combinedBuffers));
-    console.info("TTS generation successful");
+    logger.info(`TTS generation successful for: "${text.slice(0, 20)}..."`);
   } catch (error) {
-    console.error("Error generating TTS:", error);
+    logger.error("Error generating TTS:", { error });
     throw error;
   }
 }
@@ -177,6 +181,7 @@ const ttsCommand: SlashCommand = {
     // Filter bad words
     const profanityCheck: filterWordResult = filterWords(cleanedText);
     if(profanityCheck.profanity){
+      logger.info(`Profanity detected: ${profanityCheck.message}`);
       await interaction.editReply("Admiiin!, ada yang ngomong kasar min!");
       return;
     }
@@ -188,7 +193,7 @@ const ttsCommand: SlashCommand = {
       // Setup paths for audio file
       const baseAudioPath = path.join("/tmp/dcbot", "audiofiles");
       if (!interaction.guildId || interaction.guildId == null) {
-        console.error("no guild id found");
+        logger.error("No guild id found");
         return;
       }
       const serverPath = path.join(baseAudioPath, interaction.guildId);
@@ -212,10 +217,13 @@ const ttsCommand: SlashCommand = {
       await generateTTS(ttsText, ttsPath);
       const resource = createAudioResource(ttsPath);
       player.play(resource);
-
+      player.on("error", (error) => {
+        logger.error("Error playing audio: ", { error });
+      });
+      logger.info(`Playing TTS for message: "${cleanedText.slice(0, 40)}..."`);
       await interaction.editReply(`Playing your message: ${cleanedText}`);
     } catch (error) {
-      console.error("TTS Error:", error);
+      logger.error("TTS Error:", { error });
       await interaction.editReply("Failed to play your message!");
     }
   },
