@@ -6,9 +6,8 @@ import {
   ButtonStyle,
 } from "discord.js";
 import { SlashCommand } from "../types";
-import dotenv from "dotenv";
+import "dotenv/config";
 
-dotenv.config();
 const client_id: string = process.env.DISCORD_CLIENT_ID || "";
 
 const inviteCommand: SlashCommand = {

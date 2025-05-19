@@ -1,7 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 import { SlashCommand } from "../types";
-import dotenv from "dotenv";
-dotenv.config();
+import "dotenv/config";
 
 const pingCommand: SlashCommand = {
   data: new SlashCommandBuilder()

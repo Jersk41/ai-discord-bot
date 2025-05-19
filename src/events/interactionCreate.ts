@@ -4,6 +4,7 @@ import {
   MessageFlags,
 } from "discord.js";
 import { slashCommands } from "../commands";
+import { logger } from "../utils/logger";
 
 const interactionCreate = async (interaction: Interaction<CacheType>): Promise<void> => {
   if (!interaction.isChatInputCommand()) return;
@@ -11,14 +12,14 @@ const interactionCreate = async (interaction: Interaction<CacheType>): Promise<v
   const command = slashCommands.get(interaction.commandName);
 
   if (!command) {
-    console.error(`No Command matching ${interaction.commandName} was found`);
+    logger.error(`No Command matching ${interaction.commandName} was found`);
     return;
   }
   try {
     await command.execute(interaction);
   } catch (error) {
-    console.error(`Failed to execute command ${interaction.commandName}`);
-    console.error("Error: ", error);
+    logger.error(`Failed to execute command ${interaction.commandName}`);
+    logger.error("Error: ", error);
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({
         content: "There was an error while executing this command!",

@@ -1,8 +1,6 @@
 import { REST, Routes, DiscordAPIError  } from "discord.js";
-import dotenv from "dotenv";
+import "dotenv/config";
 import { slashCommandsArr } from "./commands";
-
-dotenv.config();
 
 // env
 const token: string = process.env.DISCORD_TOKEN || "";

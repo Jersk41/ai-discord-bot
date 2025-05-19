@@ -3,6 +3,7 @@ import { translate } from "./utils/translate";
 import type { ChatCompletionOutput } from "@huggingface/tasks";
 import { Message, MessageCreateOptions, TextChannel } from "discord.js";
 import type { MessageResponse, ErrorResponse } from "./types";
+import { logger } from "./utils/logger";
 
 //dotenv.config();
 
@@ -98,7 +99,7 @@ export const handleMessage = async (message: Message): Promise<void> => {
 
     let botResponse = response.choices[0].message;
     if (!botResponse || !botResponse.content) {
-      console.error("Respon bot tidak cocok", botResponse);
+      logger.error("Respon bot tidak cocok", botResponse);
       return;
     }
 
@@ -106,7 +107,7 @@ export const handleMessage = async (message: Message): Promise<void> => {
       const content = JSON.parse(botResponse.content).data;
       botResponse = content;
     } catch (err: Error | unknown) {
-      console.error("Error parsing data: ", err instanceof Error ? err.message : String(err));
+      logger.error("Error parsing data: ", err instanceof Error ? err.message : String(err));
       return;
     }
 
@@ -131,7 +132,7 @@ export const handleMessage = async (message: Message): Promise<void> => {
       code: 500,
       details: error
     };
-    console.error("Message handling error:", errorResponse);
+    logger.error("Message handling error:", errorResponse);
     await message.reply(errorResponse.message);
   }
 }
@@ -157,6 +158,6 @@ export const handleError = (error: unknown): ErrorResponse => {
     code: error instanceof Error ? 400 : 500,
     details: error
   };
-  console.error("Error occurred:", errorResponse);
+  logger.error("Error occurred:", errorResponse);
   return errorResponse;
 };

@@ -2,6 +2,7 @@ import { SlashCommandBuilder, InteractionEditReplyOptions } from "discord.js";
 import type { SlashCommand } from "../types";
 import { hf,  CHAT_MODELS, SYSTEM_PROMPT } from "../utils/inferences"
 import type { ChatCompletionOutput } from "@huggingface/tasks";
+import { logger } from "../utils/logger";
 
 type listModelType = {
   name: string,
@@ -53,14 +54,14 @@ const chatCommand: SlashCommand = {
       const botResponse = response.choices[0].message;
 
       if (!botResponse || !botResponse.content){
-        console.error("Respon bot tidak cocok", botResponse)
+        logger.error("Respon bot tidak cocok", botResponse)
         await interaction.editReply("Maaf, bot tidak memberikan respon yang valid.");
         return;
       }
 
       const content = botResponse.content.toString();
 
-      console.log('bot message: ', content);
+      logger.debug('bot message: ', content);
 
       const replyOptions: InteractionEditReplyOptions = {
         content: content, // Now guaranteed to be a string
@@ -68,7 +69,7 @@ const chatCommand: SlashCommand = {
       await interaction.editReply(replyOptions);
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       await interaction.editReply(
         "maaf, terjadi kesalahan saat memproses permintaan anda."
       );
