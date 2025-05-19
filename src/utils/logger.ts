@@ -26,8 +26,8 @@ export const logger: winston.Logger = winston.createLogger({
     isProduction 
       ? winston.format.json() 
       : winston.format.colorize({ all: true }),
-    winston.format.printf(({ timestamp, level, message }) => {
-      return `[${timestamp}] ${level}: ${message}`;
+    winston.format.printf(({ timestamp, level, message, metadata }) => {
+      return `[${timestamp}] ${level}: ${message}. ${metadata ? JSON.stringify(metadata) : ""}`;
     })
   ),
   transports
