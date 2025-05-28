@@ -1,10 +1,12 @@
-import { ElevenLabsClient, play, stream } from "@elevenlabs/elevenlabs-js";
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import "dotenv/config";
 import { logger } from "./logger";
 import { Readable } from "stream";
 import * as googleTTS from "google-tts-api";
 import { createAudioResource, StreamType } from "@discordjs/voice";
+import { createClient } from '@supabase/supabase-js'
 
+// Create a single supabase client for interacting with your database
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY!;
 
 const ttsModelList = [
@@ -42,33 +44,6 @@ export async function generateFromGoogleTTS(
   });
 }
 
-const generateVoice = async (text: string) => {
-  try {
-    const elevenlabs = new ElevenLabsClient({
-      apiKey: ELEVENLABS_API_KEY,
-    });
-    const audioStream = await elevenlabs.textToSpeech.stream(
-      "4RK3Moe6TpBQ4otXBFtc",
-      {
-        text,
-        modelId: "eleven_flash_v2_5",
-        // outputFormat: 'opus_48000_64',
-        // optimizeStreamingLatency: 3,
-        // Optional voice settings that allow you to customize the output
-        // voiceSettings: {
-        //   stability: 0.5,
-        //   speed: 0.8,
-        //   similarityBoost: 0.5,
-        // },
-      }
-    );
-    return await stream(audioStream);
-  } catch (error) {
-    logger.error("Failed to fetch voice: ", {error});
-    throw new Error("Failed to fetch voice");
-  }
-}
-
 export const generateFromElevenLabs = async (
   text: string
 ): Promise<ReturnType<typeof createAudioResource>> => {
@@ -79,22 +54,13 @@ export const generateFromElevenLabs = async (
     if (!elevenlabs) {
       throw new Error("Failed to create Eleven Labs client");
     }
-    // const stream = await generateVoice(text);
-    // console.debug(stream);
     logger.debug("1. Generating Eleven Labs TTS resource ");
     const audioStream = await elevenlabs.textToSpeech.stream(
       ttsModelList[0].voiceId,
       {
         text,
         modelId: "eleven_flash_v2_5",
-        // outputFormat: 'opus_48000_64',
         optimizeStreamingLatency: 3,
-        // Optional voice settings that allow you to customize the output
-        // voiceSettings: {
-        //   stability: 0.5,
-        //   speed: 0.8,
-        //   similarityBoost: 0.5,
-        // },
       }
     );
     logger.debug("Audio stream created successfully: ", { stream: audioStream as Readable });
@@ -122,12 +88,46 @@ export const generateFromElevenLabs = async (
   }
 };
 
-export const generateTTSStream = async (
+export const getOrCreateTTS = async (
   text: string,
-  model: "google" | "elevenlabs" = "google"
+  model: "gtts" | "elevenlabs" = "gtts"
 ): Promise<ReturnType<typeof createAudioResource>> => {
-  if (model === "elevenlabs") {
-    return await generateFromElevenLabs(text);
+  const supabase = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_KEY!
+  );
+  try {
+    // Add timeout and retry logic
+    const { data, error } = await supabase.functions.invoke('tts', {
+      body: { text, service_type: model },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+    });
+
+    if (error) {
+      logger.error('Edge function error:', error);
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error('No data received from edge function');
+    }
+
+    const buffer = Buffer.from(data);
+    return createAudioResource(Readable.from(buffer), {
+      inputType: StreamType.Arbitrary,
+    });
+  } catch (error) {
+    logger.error('TTS Generation Error:', {
+      error,
+      text,
+      model
+    });
+    // Fallback to direct API calls if edge function fails
+    return model === "elevenlabs" ?
+      await generateFromElevenLabs(text) :
+      await generateFromGoogleTTS(text);
   }
-  return await generateFromGoogleTTS(text);
-};
+}

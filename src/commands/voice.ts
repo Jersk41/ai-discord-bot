@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import {
   GuildMember,
   InteractionEditReplyOptions,
@@ -13,22 +11,21 @@ import {
   VoiceConnection,
   createAudioResource,
 } from "@discordjs/voice";
-import * as googleTTS from "google-tts-api";
 import type { SlashCommand } from "../types";
 import { connectToChannel } from "../utils/helpers";
 import { cleanText, filterWordResult, filterWords } from "../utils/filter";
 import { logger } from "../utils/logger";
 import type { ChatInputCommandInteraction } from "discord.js";
-import { generateTTSStream } from "../utils/tts";
+import { getOrCreateTTS } from "../utils/tts";
 
 let connection: VoiceConnection | undefined;
 // Create a type for TTS queue items
 interface TTSQueueItem {
   resource: ReturnType<typeof createAudioResource>;
   connection: VoiceConnection;
-  interaction: ChatInputCommandInteraction | any;
+  interaction: ChatInputCommandInteraction;
   text: string;
-  model: "google" | "elevenlabs";
+  model: "gtts" | "elevenlabs";
 }
 
 // Create a map to hold the TTS queues for each guild
@@ -39,7 +36,7 @@ const playNextInQueue = (guildId: string) => {
   const queue = ttsQueueMap.get(guildId);
   if (!queue || queue.length === 0) return;
 
-  const { resource, connection, interaction, text, model = "google" } = queue[0];
+  const { resource, connection, interaction, text, model } = queue[0];
   const player = createAudioPlayer();
 
   connection.subscribe(player);
@@ -58,7 +55,7 @@ const playNextInQueue = (guildId: string) => {
     playNextInQueue(guildId);
   });
 
-  logger.info(`Playing TTS in guild ${guildId}: "${text.slice(0, 40)}..."`);
+  logger.info(`Playing TTS in guild ${guildId} with ${model}: "${text.slice(0, 40)}..."`);
 }
 const joinVc: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -140,40 +137,6 @@ const outVc: SlashCommand = {
   },
 };
 
-export async function generateTTS(
-  text: string,
-  outputPath: fs.PathOrFileDescriptor,
-  lang: string = "id-ID"
-) {
-  if (!text || typeof text !== "string" || text.trim() === "") {
-    throw new Error("Invalid text input for TTS generation");
-  }
-
-  try {
-    const results = googleTTS.getAllAudioUrls(`${text}`, {
-      lang: lang,
-      slow: false,
-      host: "https://translate.google.com",
-      splitPunct: ",.?! ",
-    });
-    const combinedBuffers: Buffer[] = [];
-    for (const item of results) {
-      const response = await fetch(item.url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch TTS audio: ${response.statusText}`);
-      }
-      const buffer = await response.arrayBuffer();
-      combinedBuffers.push(Buffer.from(buffer));
-    }
-    fs.writeFileSync(outputPath, Buffer.concat(combinedBuffers));
-    logger.info(`TTS generation successful for: "${text.slice(0, 20)}..."`);
-  } catch (error) {
-    logger.error("Error generating TTS:", { error });
-    throw error;
-  }
-}
-
-
 const ttsCommand: SlashCommand = {
   data: new SlashCommandBuilder()
   .setName("tts")
@@ -186,7 +149,7 @@ const ttsCommand: SlashCommand = {
     option.setName("model")
     .setDescription("Model of tts")
     .setChoices(
-      { name: "google tts", value: "google" },
+      { name: "google tts", value: "gtts" },
       { name: "elevenlabs (premium)", value: "elevenlabs" },
     )
   ),
@@ -234,7 +197,7 @@ const ttsCommand: SlashCommand = {
 
     // 2. Check if bot is already in a voice channel
     const guildId = interaction.guildId!;
-    const userId = interaction.user.id;
+    // const userId = interaction.user.id;
     const connection = await connectToChannel(voiceChannel);
 
     // 3. Create audio player
@@ -243,8 +206,11 @@ const ttsCommand: SlashCommand = {
     const ttsText = `${interaction.user.displayName} bilang: ${cleanedText}`;
 
     // 4. Generate TTS audio stream
-    const model = interaction.options.getString('model') as "google" | "elevenlabs";
-    const resource = await generateTTSStream(ttsText, model);
+    const model = interaction.options.getString('model') as "gtts" | "elevenlabs";
+    // const resource = await generateTTSStream(ttsText, model);
+    // 4.a. Check if any cached TTS audio exists and retrieve it
+    const resource = await getOrCreateTTS(ttsText, model);
+    logger.debug("Resource created: ", {...resource});
 
     // 5. Play the audio with queue management
     if (!ttsQueueMap.has(guildId)) ttsQueueMap.set(guildId, []);
@@ -254,7 +220,7 @@ const ttsCommand: SlashCommand = {
       connection,
       interaction,
       text: cleanedText,
-      model: options.model as "google" | "elevenlabs",
+      model: options.model as "gtts" | "elevenlabs",
     };
     queue.push(queueItem);
     if (queue.length === 1) playNextInQueue(guildId);
@@ -344,5 +310,7 @@ const ttsCommand: SlashCommand = {
   },
 };
 
+// Comment out unused generateTTS function
+// export async function generateTTS(...) { ... }
 
 export { joinVc, outVc, ttsCommand };

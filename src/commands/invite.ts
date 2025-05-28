@@ -27,17 +27,26 @@ const inviteCommand: SlashCommand = {
     const invite = new ButtonBuilder()
     // .setCustomId("invite")
     .setLabel("Invite me")
+    .setEmoji("🤖")
     .setURL(`https://discord.com/oauth2/authorize?client_id=${client_id}&permissions=277062343744&scope=bot%20applications.commands`)
     .setStyle(ButtonStyle.Link)
 
     const support = new ButtonBuilder()
     // .setCustomId("server")
     .setLabel("Support Server")
+    .setEmoji("💬")
     .setURL("https://discord.gg/s5GujHGqGM")
     .setStyle(ButtonStyle.Link)
 
+    const donate = new ButtonBuilder()
+    // .setCustomId("server")
+    .setLabel("Donate")
+    .setEmoji("☕")
+    .setURL("https://ko-fi.com/japarsidik/tip")
+    .setStyle(ButtonStyle.Link)
+
     const row = new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(invite, support);
+			.addComponents(invite, support, donate);
 
     await interaction.reply({
       embeds: [invitationEmbed],
