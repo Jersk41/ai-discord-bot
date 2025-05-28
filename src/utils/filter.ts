@@ -31,7 +31,7 @@ export const filterWords = (text: string): filterWordResult => {
     let cleanText: string;
     let profanity;
     if (doesContainBadWords(latinText, badwordsFilter)) {
-      let loc = findBadWordLocations(latinText, badwordsFilter);
+      const loc = findBadWordLocations(latinText, badwordsFilter);
       const badWords = getBadWords(loc);
       cleanText = censorText(latinText, badwordsFilter, {
         replacementType: WordReplacementType.RepeatCharacter,
@@ -46,9 +46,9 @@ export const filterWords = (text: string): filterWordResult => {
     } else {
       return { message: latinText, profanity: profanity };
     }
-  } catch (error: unknown | any) {
+  } catch (error) {
     logger.error("Error on word checking", error);
-    throw new Error(error instanceof Error ? error.message : error);
+    throw new Error(error instanceof Error ? error.message : String(error));
   }
 };
 

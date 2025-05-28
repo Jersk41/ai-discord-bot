@@ -1,13 +1,25 @@
 import winston from "winston";
 import "dotenv/config";
 
-const isProduction = process.env.ENV === "prod";
+const ENV: string = process.env.ENV ?? "prod";
+
+const loggerFormat = winston.format.combine(
+  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  ENV === "prod" || ENV === "staging"
+    ? winston.format.json()
+    : winston.format.colorize({ all: true }),
+  winston.format.printf(({ timestamp, level, message, metadata }) => {
+    return `[${timestamp}] ${level}: ${message}. ${metadata ? JSON.stringify(metadata) : ""}`;
+  })
+);
 
 const transports: winston.transport[] = [
-  new winston.transports.Console()
+  new winston.transports.Console({
+    level: ENV === "staging" ? "info" : ENV === "dev" ? "debug" : "warn",
+  })
 ];
 
-if (isProduction) {
+if (ENV === "prod" || ENV === "staging") {
   transports.push(
     new winston.transports.File({
      filename: "logs/error.log",
@@ -20,15 +32,6 @@ if (isProduction) {
 }
 
 export const logger: winston.Logger = winston.createLogger({
-  level: isProduction ? "info" : "debug",
-  format: winston.format.combine(
-    winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    isProduction 
-      ? winston.format.json() 
-      : winston.format.colorize({ all: true }),
-    winston.format.printf(({ timestamp, level, message, metadata }) => {
-      return `[${timestamp}] ${level}: ${message}. ${metadata ? JSON.stringify(metadata) : ""}`;
-    })
-  ),
+  format: loggerFormat,
   transports
 });
